@@ -1,0 +1,138 @@
+{
+  "name": "Timeline",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Foreign key reference to Project.id"
+    },
+    "timeline_json": {
+      "type": "object",
+      "description": "Full editing state as a structured JSON object",
+      "properties": {
+        "clips": {
+          "type": "array",
+          "description": "Ordered list of video clips in the timeline",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "src": {
+                "type": "string",
+                "description": "Video file URL"
+              },
+              "name": {
+                "type": "string"
+              },
+              "start": {
+                "type": "number",
+                "description": "Start offset in seconds"
+              },
+              "duration": {
+                "type": "number",
+                "description": "Clip duration in seconds"
+              },
+              "order": {
+                "type": "number",
+                "description": "Position in timeline (1-based)"
+              },
+              "trimStart": {
+                "type": "number",
+                "description": "Trim from the beginning in seconds"
+              },
+              "trimEnd": {
+                "type": "number",
+                "description": "Trim from the end in seconds"
+              },
+              "volume": {
+                "type": "number",
+                "description": "Volume multiplier 0.0\u20131.0"
+              },
+              "muted": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "src",
+              "order"
+            ]
+          }
+        },
+        "texts": {
+          "type": "array",
+          "description": "Text overlays applied to the video",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "startTime": {
+                "type": "number",
+                "description": "When overlay appears (seconds)"
+              },
+              "duration": {
+                "type": "number",
+                "description": "How long overlay shows (seconds)"
+              },
+              "x": {
+                "type": "number",
+                "description": "Horizontal position percent"
+              },
+              "y": {
+                "type": "number",
+                "description": "Vertical position percent"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "color": {
+                "type": "string"
+              },
+              "bold": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "content"
+            ]
+          }
+        },
+        "settings": {
+          "type": "object",
+          "description": "Global timeline settings",
+          "properties": {
+            "aspectRatio": {
+              "type": "string",
+              "enum": [
+                "16:9",
+                "9:16",
+                "1:1",
+                "4:3"
+              ],
+              "default": "16:9"
+            },
+            "resolution": {
+              "type": "string",
+              "default": "1920x1080"
+            },
+            "fps": {
+              "type": "number",
+              "default": 30
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "project_id",
+    "timeline_json"
+  ]
+}
