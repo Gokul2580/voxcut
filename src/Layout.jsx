@@ -1,11 +1,11 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Clapperboard, LayoutDashboard, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Layout({ children, currentPageName }) {
+  const { logout } = useAuth();
   const isEditor = currentPageName === "Editor";
   const isLanding = currentPageName === "Landing";
 
@@ -43,7 +43,7 @@ export default function Layout({ children, currentPageName }) {
                 Projects
               </Link>
               <button
-                onClick={() => db.auth.logout()}
+                onClick={() => logout()}
                 className="px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
