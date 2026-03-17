@@ -311,7 +311,7 @@ Return JSON with the updated clip properties based on the user's request.`;
               </Button>
             </div>
           </div>
-            </>
+          </>
           )}
 
           {activeTab === "text" && (
