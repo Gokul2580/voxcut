@@ -1,11 +1,9 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import React, { useState, useEffect, useCallback, useReducer, useRef } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Clapperboard, ChevronLeft, Save, Loader2, Download, MessageSquare, X, Lightbulb, Sparkles, Settings2 } from "lucide-react";
+import { Clapperboard, ChevronLeft, Save, Loader2, Download, MessageSquare, X, Lightbulb, Sparkles, Settings2, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import MediaLibrary from "@/components/editor/MediaLibrary";
@@ -15,6 +13,8 @@ import ChatPanel from "@/components/editor/ChatPanel";
 import RenderModal from "@/components/editor/RenderModal";
 import OneShotPanel from "@/components/editor/OneShotPanel";
 import ClipEditPanel from "@/components/editor/ClipEditPanel";
+import CinematicEnhance from "@/components/editor/CinematicEnhance";
+import VideoExportModal from "@/components/editor/VideoExportModal";
 import { timelineReducer } from "@/components/editor/timelineReducer";
 import { ensureTracks, inferMediaType } from "@/components/editor/timelineHelpers";
 import { smartInsertAsset } from "@/components/editor/smartInsertAsset";
@@ -41,6 +41,8 @@ export default function Editor() {
   const [oneShotOpen, setOneShotOpen] = useState(false);
   const [highlightedClipId, setHighlightedClipId] = useState(null);
   const [editingClip, setEditingClip] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [enhancingClip, setEnhancingClip] = useState(null);
   const navigate = useNavigate();
   const [localAssets, setLocalAssets] = useState([]);
   const [timelinePlayhead, setTimelinePlayhead] = useState(0);
@@ -364,12 +366,22 @@ export default function Editor() {
             <Save className="w-3 h-3 mr-1.5" />
             <span className="hidden sm:inline">Save</span>
           </Button>
-          {/* Export goes through the intent pipeline */}
+          {/* Enhance button */}
+          <Button size="sm" variant="outline"
+            className="h-8 text-xs border-violet-500/50 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 hover:text-violet-300"
+            onClick={() => selectedClipId && setEnhancingClip(timeline.clips?.find(c => c.id === selectedClipId))}
+            disabled={isBusy || !selectedClipId}
+            title="Apply AI cinematic enhancement to selected clip">
+            <Wand2 className="w-3 h-3 mr-1.5" />
+            <span className="hidden sm:inline">Enhance</span>
+          </Button>
+          {/* Export button */}
           <Button size="sm"
             className="h-8 text-xs bg-gradient-to-r from-violet-500 to-blue-500 hover:from-violet-600 hover:to-blue-600"
-            onClick={() => handleIntent({ type: "export" })}
-            disabled={isBusy}>
-            <Download className="w-3 h-3 mr-1.5" />Export
+            onClick={() => setExportOpen(true)}
+            disabled={isBusy || !timeline?.clips?.length}>
+            <Download className="w-3 h-3 mr-1.5" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
           <Button size="sm" variant="outline"
             className={`h-8 text-xs border-border/50 ${beginnerMode ? "border-amber-500/50 text-amber-400 bg-amber-500/10" : ""}`}
@@ -467,6 +479,47 @@ export default function Editor() {
           clip={editingClip}
           onClose={() => setEditingClip(null)}
           onUpdate={handleClipUpdate}
+        />
+      )}
+
+      {/* Cinematic Enhancement Modal */}
+      {enhancingClip && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Cinematic Enhancement</h3>
+              <button
+                onClick={() => setEnhancingClip(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4">
+              <CinematicEnhance
+                clip={enhancingClip}
+                onEnhance={(enhancedClip) => {
+                  handleClipUpdate(enhancedClip);
+                  setEnhancingClip(null);
+                  toast.success("Clip enhanced with cinematic effects!");
+                }}
+                disabled={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Export Modal */}
+      {exportOpen && (
+        <VideoExportModal
+          project={project}
+          clip={timeline.clips?.[0] || {}}
+          onClose={() => setExportOpen(false)}
+          onSuccess={() => {
+            setExportOpen(false);
+            toast.success("Video exported successfully!");
+          }}
         />
       )}
     </div>
