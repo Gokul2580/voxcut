@@ -309,7 +309,6 @@ Return JSON with the updated clip properties based on the user's request.`;
               >
                 {muted ? "Unmute" : "Mute"} Audio
               </Button>
-              </div>
             </div>
           </div>
             </>
