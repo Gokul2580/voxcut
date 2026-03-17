@@ -1,5 +1,3 @@
-const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me: async()=>null }, entities:new Proxy({}, { get:()=>({ filter:async()=>[], get:async()=>null, create:async()=>({}), update:async()=>({}), delete:async()=>({}) }) }), integrations:{ Core:{ UploadFile:async()=>({ file_url:'' }) } } };
-
 import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +13,10 @@ import {
   X,
   Crop,
   Wand2,
+  Type,
+  Palette,
+  Zap,
+  Play,
 } from "lucide-react";
 import {
   Select,
@@ -24,8 +26,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import TextCaptionsPanel from "./panels/TextCaptionsPanel";
+import EffectsPanel from "./panels/EffectsPanel";
+import AudioControlsPanel from "./panels/AudioControlsPanel";
+import KeyframePanel from "./panels/KeyframePanel";
+import SpeedControlPanel from "./panels/SpeedControlPanel";
+import CropPanPanel from "./panels/CropPanPanel";
 
 export default function ClipEditPanel({ clip, onClose, onUpdate }) {
+  const [activeTab, setActiveTab] = useState("basic");
   const [editPrompt, setEditPrompt] = useState("");
   const [processing, setProcessing] = useState(false);
   const [trimStart, setTrimStart] = useState(clip.trimStart || 0);
@@ -33,6 +42,11 @@ export default function ClipEditPanel({ clip, onClose, onUpdate }) {
   const [speed, setSpeed] = useState(clip.speed || 1);
   const [volume, setVolume] = useState(clip.volume ?? 1);
   const [muted, setMuted] = useState(clip.muted || false);
+  const [texts, setTexts] = useState(clip.texts || []);
+  const [effects, setEffects] = useState(clip.effects || {});
+  const [audioFade, setAudioFade] = useState(clip.audioFade || []);
+  const [keyframes, setKeyframes] = useState(clip.keyframes || {});
+  const [crop, setCrop] = useState(clip.crop || { x: 0, y: 0, width: 1, height: 1 });
 
   const effectiveDuration = (clip.duration || 0) - trimStart - trimEnd;
 
@@ -100,15 +114,29 @@ Return JSON with the updated clip properties based on the user's request.`;
       speed,
       volume,
       muted,
+      texts,
+      effects,
+      audioFade,
+      keyframes,
+      crop,
     });
     onClose();
   };
 
+  const tabs = [
+    { id: "basic", label: "Basic", icon: Scissors },
+    { id: "text", label: "Text", icon: Type },
+    { id: "effects", label: "Effects", icon: Palette },
+    { id: "audio", label: "Audio", icon: Volume2 },
+    { id: "animation", label: "Animation", icon: Zap },
+    { id: "crop", label: "Crop", icon: Crop },
+  ];
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+        <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold">Edit Clip</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -120,9 +148,34 @@ Return JSON with the updated clip properties based on the user's request.`;
           </Button>
         </div>
 
+        {/* Tabs */}
+        <div className="border-b border-border overflow-x-auto">
+          <div className="flex gap-0">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 px-3 py-2 text-xs font-medium flex items-center justify-center gap-1.5 border-b-2 transition-colors whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "border-violet-500 text-violet-400"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Content */}
-        <div className="p-4 space-y-4">
-          {/* AI Edit Prompt */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {activeTab === "basic" && (
+            <>
+              {/* AI Edit Prompt */}
           <div className="space-y-2 p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
             <Label className="text-xs flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-violet-400" />
@@ -256,8 +309,46 @@ Return JSON with the updated clip properties based on the user's request.`;
               >
                 {muted ? "Unmute" : "Mute"} Audio
               </Button>
+              </div>
             </div>
           </div>
+            </>
+          )}
+
+          {activeTab === "text" && (
+            <TextCaptionsPanel texts={texts} onUpdate={setTexts} />
+          )}
+
+          {activeTab === "effects" && (
+            <EffectsPanel effects={effects} onUpdate={setEffects} />
+          )}
+
+          {activeTab === "audio" && (
+            <AudioControlsPanel
+              volume={volume}
+              muted={muted}
+              audioFade={audioFade}
+              onVolumeChange={(v) => setVolume(v)}
+              onMutedChange={(m) => setMuted(m)}
+              onAudioFadeChange={setAudioFade}
+            />
+          )}
+
+          {activeTab === "animation" && (
+            <KeyframePanel
+              keyframes={keyframes}
+              duration={clip.duration || 10}
+              onUpdate={setKeyframes}
+            />
+          )}
+
+          {activeTab === "crop" && (
+            <CropPanPanel
+              crop={crop}
+              onCropChange={setCrop}
+              onPanAnimationChange={(pan) => console.log("Pan animation:", pan)}
+            />
+          )}
         </div>
 
         {/* Footer */}
